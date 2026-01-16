@@ -1401,6 +1401,7 @@ GameObject:
   - component: {fileID: 6331308522103051745}
   - component: {fileID: 3153937139826973893}
   - component: {fileID: 4542070571393146163}
+  - component: {fileID: 3761024017839643044}
   m_Layer: 0
   m_Name: PlayerNetwork
   m_TagString: Untagged
@@ -1582,8 +1583,14 @@ MonoBehaviour:
   Damage: 25
   animator: {fileID: 6301890673216575417}
   weaponHitbox: {fileID: 0}
-  moveSpeed: 6
-  rotationSpeed: 10
+  forwardSpeed: 6
+  backwardSpeed: 4.5
+  acceleration: 25
+  turnSpeed: 220
+  useMouseLook: 1
+  mouseSensitivity: 1000
+  allowStrafeWithAlt: 1
+  strafeSpeed: 5.5
 --- !u!114 &4542070571393146163
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1596,6 +1603,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 929db353be2294df49f7be06a3711dd8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &3761024017839643044
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6006076672715944705}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 58fe74a2cba1c44958c58f4bca8e2e7c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
+  offset: {x: 0, y: 2.2, z: -4.5}
+  positionSmooth: 12
+  rotationSmooth: 12
 --- !u!1 &6418859423155957497
 GameObject:
   m_ObjectHideFlags: 0

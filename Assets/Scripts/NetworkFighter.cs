@@ -1,25 +1,46 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
-using UnityEngine;
 using Mirror;
 
 public class NetworkFighter : NetworkBehaviour
 {
     [Header("Stats")]
-    [SyncVar] public int Health = 500;
+    public static int maxHealth = 500;
+    [SyncVar] public int Health = maxHealth;
     public int Damage = 25;
 
     [Header("Refs")]
     public Animator animator;
-    public Collider weaponHitbox; // Collider trigger sur l'arme
+    public Collider weaponHitbox;
 
     [Header("Move")]
-    public float moveSpeed = 6f;
-    public float rotationSpeed = 10f;
+    public float forwardSpeed = 6f;
+    public float backwardSpeed = 4.5f;
+    public float acceleration = 25f;
 
+    [Header("Turn")]
+    public float turnSpeed = 220f;
+    public float mouseSensitivity = 180f;
+    public bool allowStrafeWithAlt = true;
+    public float deplacementSpeed = 5.5f;
+
+    float yaw;
+    Vector3 currentMove;
     bool canHitThisSwing;
+
+    [Server]
+    public void Heal(int amount)
+    {
+        Health = Mathf.Min(Health + amount, maxHealth);
+    }
+
+
+    public override void OnStartLocalPlayer()
+    {
+        yaw = transform.eulerAngles.y;
+        Application.runInBackground = true;
+    }
 
     void Awake()
     {
@@ -31,35 +52,47 @@ public class NetworkFighter : NetworkBehaviour
     {
         if (!isLocalPlayer) return;
 
-        // Input simple WASD
-        float h = 0f;
-        float v = 0f;
-        if (Input.GetKey(KeyCode.A)) h = -1f;
-        if (Input.GetKey(KeyCode.D)) h = 1f;
-        if (Input.GetKey(KeyCode.W)) v = 1f;
-        if (Input.GetKey(KeyCode.S)) v = -1f;
+        float h = Input.GetAxisRaw("HorizontalPlayerOne");
+        float v = Input.GetAxisRaw("VerticalPlayerOne");
 
-        Vector3 dir = new Vector3(h, 0, v).normalized;
+        // ----- TURN (clavier + souris) -----
+        float yawDelta = 0f;
+
+        // Clavier:
+        yawDelta += h * turnSpeed * Time.deltaTime;
+
+        // Souris:
+        float mouseX = Input.GetAxis("Mouse X");
+        yawDelta += mouseX * mouseSensitivity * Time.deltaTime;
+
+        yaw += yawDelta;
+        Quaternion yawRot = Quaternion.Euler(0f, yaw, 0f);
+        transform.rotation = yawRot;
+
+        // ----- MOVE -----
+        Vector3 input = new Vector3(h, 0f, v);
+
+        //ne pas aller plus vite en diagonal
+        input = Vector3.ClampMagnitude(input, 1f);
+
+        Vector3 desiredMove = yawRot * input * deplacementSpeed;
+
+        currentMove = Vector3.Lerp(currentMove, desiredMove, 1f - Mathf.Exp(-acceleration * Time.deltaTime));
+        transform.position += currentMove * Time.deltaTime;
 
         animator.SetFloat("Input X", h);
         animator.SetFloat("Input Z", v);
-        animator.SetBool("Moving", dir != Vector3.zero);
+        animator.SetBool("Moving", input.sqrMagnitude > 0.0001f);
 
-        if (dir != Vector3.zero)
-        {
-            transform.position += dir * moveSpeed * Time.deltaTime;
-
-            Quaternion targetRot = Quaternion.LookRotation(dir);
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, rotationSpeed * Time.deltaTime);
-        }
-
+        // ----- ATTACK -----
         if (Input.GetKeyDown(KeyCode.Space))
         {
-            animator.SetTrigger("Attack1Trigger"); // instant sur toi
-            CmdPlayAttack();                       // pour l'autre joueur
+            animator.SetTrigger("Attack1Trigger");
+            CmdPlayAttack();
         }
-
     }
+
+
 
     [Command]
     void CmdPlayAttack()
@@ -74,16 +107,6 @@ public class NetworkFighter : NetworkBehaviour
         if (isLocalPlayer) return;
         animator.SetTrigger("Attack1Trigger");
     }
-
-
-
-    [ClientRpc]
-    void RpcStartSwing()
-    {
-        if (!isLocalPlayer) return;
-        StartCoroutine(SwingWindow());
-    }
-
     public void OnAnimHit()
     {
         if (!isLocalPlayer) return;
@@ -92,7 +115,7 @@ public class NetworkFighter : NetworkBehaviour
         StartCoroutine(SwingWindow());
     }
 
-    System.Collections.IEnumerator SwingWindow()
+    IEnumerator SwingWindow()
     {
         if (!weaponHitbox) yield break;
         weaponHitbox.enabled = true;
