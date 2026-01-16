@@ -1818,7 +1818,7 @@ MonoBehaviour:
   everySeconds: 5
   xRange: {x: -20, y: 20}
   zRange: {x: -20, y: 20}
-  healPotionPrefabs:
+  potionsPrefab:
   - {fileID: 173500, guid: fb5a9652227c545d98a413cd73b80b69, type: 3}
 --- !u!4 &1503365279
 Transform:

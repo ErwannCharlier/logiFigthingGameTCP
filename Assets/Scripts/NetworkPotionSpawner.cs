@@ -10,8 +10,8 @@ public class NetworkPotionSpawner : NetworkBehaviour
     public Vector2 xRange = new Vector2(-20f, 20f);
     public Vector2 zRange = new Vector2(-20f, 20f);
 
-    [Header("Potions (heal only for now)")]
-    public List<GameObject> healPotionPrefabs;
+    [Header("Potions")]
+    public List<GameObject> potionsPrefab;
 
     public override void OnStartServer()
     {
@@ -25,12 +25,12 @@ public class NetworkPotionSpawner : NetworkBehaviour
         {
             yield return new WaitForSeconds(everySeconds);
 
-            var prefab = healPotionPrefabs[Random.Range(0, healPotionPrefabs.Count)];
+            var prefab = potionsPrefab[Random.Range(0, potionsPrefab.Count)];
 
             float x = Random.Range(xRange.x, xRange.y);
             float z = Random.Range(zRange.x, zRange.y);
 
-            Vector3 pos = new Vector3(x, prefab.transform.position.y, z);
+            Vector3 pos = new Vector3(x, 0.2f, z);
 
             GameObject potion = Instantiate(prefab, pos, Quaternion.identity);
             NetworkServer.Spawn(potion);
